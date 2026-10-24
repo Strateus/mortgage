@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Как устроена ипотека</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f3ef; --surface:#ffffff; --ink:#1a1d24; --muted:#5b616c; --line:#dcdfe2; --track:#e4e6e8;
+  --now:#b86e0e; --later:#3b4fa3; --later-soft:#d3d9f3; --ok:#2d7a46; --home:#5f8f3e; --on-accent:#ffffff;
+  --sans:'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --display:'Unbounded', 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121419; --surface:#1b1e25; --ink:#eceef2; --muted:#9aa1ad; --line:#2d323b; --track:#2d323b;
+    --now:#f0a640; --later:#8d9cf0; --later-soft:#2d3563; --ok:#6cc58a; --home:#a3cf7e; --on-accent:#121419;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121419; --surface:#1b1e25; --ink:#eceef2; --muted:#9aa1ad; --line:#2d323b; --track:#2d323b;
+  --now:#f0a640; --later:#8d9cf0; --later-soft:#2d3563; --ok:#6cc58a; --home:#a3cf7e; --on-accent:#121419;
+  color-scheme: dark;
+}
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+*,*::before,*::after{ box-sizing:inherit; }
+html{ scroll-padding-top:env(safe-area-inset-top,0px); }
+body{ margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 var(--sans); -webkit-text-size-adjust:100%; }
+main{ max-width:760px; margin:0 auto; padding:18px 18px 48px; }
+
+.top{ display:flex; justify-content:flex-end; margin-bottom:10px; }
+h1{ font-family:var(--display); font-weight:700; font-size:clamp(26px,7vw,40px); line-height:1.12; letter-spacing:-0.01em; margin:4px 0 10px; }
+h2{ font-family:var(--display); font-weight:500; font-size:clamp(19px,5vw,24px); line-height:1.25; margin:0 0 10px; }
+h3{ font-size:17px; font-weight:600; margin:0 0 6px; }
+.lead{ color:var(--muted); max-width:60ch; margin:0 0 22px; }
+
+.panel{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 18px 6px; }
+.ctls{ display:grid; grid-template-columns:1fr; column-gap:28px; }
+@media (min-width:640px){ .ctls{ grid-template-columns:1fr 1fr; } }
+.ctl{ margin-bottom:16px; }
+.ctl-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.ctl-head label, .ctl-head .lbl{ font-weight:500; }
+.val{ font-variant-numeric:tabular-nums; font-weight:600; text-align:right; white-space:nowrap; }
+.hint{ color:var(--muted); font-size:13.5px; line-height:1.4; margin:2px 0 0; }
+
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:30px; background:transparent; margin:2px 0 0; --thumb:var(--ink); }
+input[type=range].now{ --thumb:var(--now); }
+input[type=range].later{ --thumb:var(--later); }
+input[type=range]::-webkit-slider-runnable-track{ height:6px; border-radius:3px; background:var(--track); }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--thumb); border:3px solid var(--surface); box-shadow:0 0 0 1px var(--line); margin-top:-8px; cursor:pointer; }
+input[type=range]::-moz-range-track{ height:6px; border-radius:3px; background:var(--track); }
+input[type=range]::-moz-range-thumb{ box-sizing:border-box; width:22px; height:22px; border-radius:50%; background:var(--thumb); border:3px solid var(--surface); box-shadow:0 0 0 1px var(--line); cursor:pointer; }
+input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:3px; border-radius:6px; }
+
+.switch{ display:inline-flex; border:1px solid var(--line); border-radius:999px; padding:3px; background:var(--surface); }
+.switch button{ font:inherit; font-size:14px; border:0; background:transparent; color:var(--ink); padding:5px 13px; border-radius:999px; cursor:pointer; }
+.switch button[aria-pressed="true"]{ background:var(--ink); color:var(--bg); }
+.switch button:focus-visible, .b:focus-visible{ outline:2px solid var(--later); outline-offset:2px; }
+
+.ledger{ display:grid; grid-template-columns:1fr 1fr; column-gap:18px; margin:22px 0 6px; border-top:2px solid var(--ink); }
+.fig{ padding:12px 0 14px; border-bottom:1px solid var(--line); }
+.fig .k{ font-size:14px; color:var(--muted); }
+.fig .v{ font-size:clamp(22px,6.2vw,32px); font-weight:700; font-variant-numeric:tabular-nums; line-height:1.2; margin:2px 0; }
+.fig .s{ font-size:13px; color:var(--muted); line-height:1.35; min-height:2.7em; }
+#sMonthly, #sUpfront{ min-height:4.05em; }
+.seg-other{ background:var(--muted); }
+.seg-pre{ background:var(--later); }
+.fig.now .v{ color:var(--now); }
+.fig.later .v{ color:var(--later); }
+
+.notes{ list-style:none; padding:0; margin:12px 0 0; }
+.notes li{ position:relative; padding-left:16px; margin:7px 0; font-size:15px; line-height:1.45; }
+.notes li::before{ content:""; position:absolute; left:0; top:.55em; width:7px; height:7px; border-radius:50%; background:var(--muted); }
+
+.apr{ margin-top:40px; }
+.apr > p{ max-width:62ch; }
+.eq{ display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:start; column-gap:8px; margin:22px 0 10px; }
+.eq .n{ font-size:clamp(17px,5vw,28px); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; line-height:1.2; }
+.eq .c{ font-size:12.5px; color:var(--muted); line-height:1.3; margin-top:3px; }
+.eq .op{ font-size:clamp(19px,5.4vw,30px); line-height:1.1; color:var(--muted); font-weight:500; }
+.eq .op.sign{ color:var(--ink); font-weight:700; min-width:1ch; text-align:center; }
+.eq .op.sign.ok{ color:var(--ok); }
+.t-fee .n{ color:var(--now); }
+.t-pv .n{ color:var(--later); }
+
+.bars{ margin:16px 0 20px; }
+.bar-name{ font-size:13.5px; color:var(--muted); margin:10px 0 4px; }
+.track{ position:relative; height:24px; border-radius:6px; background:var(--track); display:flex; }
+.seg{ height:100%; transition:width .25s ease; }
+.seg-loan{ background:var(--ink); border-radius:6px; }
+.seg-fee{ background:var(--now); border-radius:6px 0 0 6px; }
+.seg-pv{ background:var(--later); border-radius:0 6px 6px 0; }
+.seg-fee.solo{ border-radius:6px; }
+.seg-pv.solo{ border-radius:6px; }
+.marker{ position:absolute; top:-5px; bottom:-5px; width:0; border-left:2px dashed var(--ink); transition:left .25s ease; }
+
+.disc{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+.marks{ position:relative; height:30px; }
+.mk{ position:absolute; top:0; width:0; }
+.mk .tick{ position:absolute; left:-1px; top:0; width:2px; height:7px; background:currentColor; }
+.mk .lab{ position:absolute; top:8px; transform:translateX(-50%); font-size:12px; white-space:nowrap; }
+.mk.l .lab{ transform:translateX(calc(-100% + 4px)); }
+.mk.r .lab{ transform:translateX(-4px); }
+.mk-rate{ color:var(--muted); }
+.mk-apr{ color:var(--ok); }
+.btns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+.b{ font:inherit; font-size:14px; padding:8px 15px; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; }
+.b.primary{ background:var(--later); border-color:var(--later); color:var(--on-accent); font-weight:600; }
+.status{ font-weight:600; margin:16px 0 4px; }
+.status.ok{ color:var(--ok); }
+.insight{ margin:0; max-width:62ch; }
+
+.chart-wrap{ margin-top:34px; }
+.legend{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--muted); margin:4px 0 8px; }
+.sw{ display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:6px; vertical-align:-1px; }
+#chart{ width:100%; }
+#chart svg{ display:block; }
+#chart text{ fill:var(--muted); font-size:11px; font-family:var(--sans); }
+.cap{ font-size:14.5px; margin:8px 0 0; max-width:62ch; }
+.foot{ color:var(--muted); font-size:13px; margin-top:34px; border-top:1px solid var(--line); padding-top:12px; }
+
+.trade{ margin-top:40px; }
+.trade > p{ max-width:62ch; }
+.total{ margin:18px 0 4px; }
+.total-k{ font-size:14px; color:var(--muted); }
+.total-v{ font-size:clamp(28px,8vw,40px); font-weight:700; font-variant-numeric:tabular-nums; line-height:1.15; margin:2px 0 12px; }
+.split-bar{ position:relative; display:flex; height:26px; border-radius:6px; background:var(--track); }
+.seg-now{ background:var(--now); border-radius:6px 0 0 6px; }
+.seg-borrow{ background:var(--later); border-radius:0 6px 6px 0; }
+.sw-line{ width:0; height:14px; border-radius:0; border-left:2px dashed var(--ink); background:none; margin:0 9px 0 4px; }
+.total .legend{ margin-top:8px; }
+.cash-bar{ display:flex; height:26px; border-radius:6px; overflow:hidden; background:var(--track); margin-top:6px; }
+.seg-bank{ background:var(--now); }
+.seg-home{ background:var(--home); }
+.trade .legend{ margin:8px 0 4px; }
+.rolled{ font-size:14.5px; margin:4px 0 18px; max-width:62ch; }
+.delta{ font-size:15px; font-weight:600; color:var(--now); margin-top:-6px; }
+#curve{ width:100%; margin-top:16px; touch-action:pan-y; cursor:pointer; -webkit-user-select:none; user-select:none; }
+#curve svg{ display:block; }
+#curve text{ fill:var(--muted); font-size:11px; font-family:var(--sans); font-variant-numeric:tabular-nums; }
+#curve .lbl-cur{ fill:var(--later); font-weight:700; font-size:12.5px; }
+.trade .ctl{ margin-top:6px; }
+.notes li.cur{ color:var(--later); font-weight:600; }
+
+.choose{ margin:0 0 24px; }
+.choose h2{ margin-bottom:12px; }
+.choices{ display:grid; grid-template-columns:1fr; gap:10px; }
+.ch{ border-top:4px solid currentColor; background:var(--surface); border-radius:0 0 12px 12px; padding:11px 14px 13px; display:grid; grid-template-columns:140px 1fr; column-gap:12px; align-items:baseline; }
+@media (min-width:560px){ .choices{ grid-template-columns:repeat(3,1fr); } .ch{ grid-template-columns:1fr; } }
+.ch-w{ font-family:var(--display); font-weight:700; font-size:20px; line-height:1.25; }
+.ch-t{ color:var(--ink); font-size:14.5px; line-height:1.4; }
+.c-bank, .p-bank{ color:var(--now); }
+.c-home, .p-home{ color:var(--home); }
+.c-ins, .p-ins{ color:var(--later); }
+.p-budget{ color:var(--muted); }
+.lh{ display:inline-flex; align-items:center; flex-wrap:wrap; gap:2px 8px; min-width:0; }
+.pill{ font-size:11.5px; font-weight:600; line-height:1.5; padding:0 8px; border-radius:999px; border:1.5px solid currentColor; }
+
+@media (prefers-reduced-motion: reduce){ .seg, .marker{ transition:none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="switch" role="group" aria-label="Language">
+      <button id="langRu" type="button">RU</button>
+      <button id="langEn" type="button">EN</button>
+    </div>
+  </div>
+
+  <h1 data-t="title"></h1>
+  <p class="lead" data-t="lead"></p>
+
+  <section class="choose" aria-labelledby="chooseH">
+    <h2 id="chooseH" data-t="chooseH"></h2>
+    <div class="choices">
+      <div class="ch c-bank"><div class="ch-w" data-t="chBank"></div><div class="ch-t" data-t="chBankT"></div></div>
+      <div class="ch c-home"><div class="ch-w" data-t="chHome"></div><div class="ch-t" data-t="chHomeT"></div></div>
+      <div class="ch c-ins"><div class="ch-w" data-t="chIns"></div><div class="ch-t" data-t="chInsT"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="termsH">
+    <h3 id="termsH" data-t="termsH" style="margin-bottom:12px"></h3>
+    <div class="ctls">
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="price" data-t="price"></label><span class="pill p-home" data-t="pHome"></span></span><span class="val" id="priceV"></span></div>
+        <input type="range" id="price" min="150000" max="300000" step="5000" value="225000">
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="cash" data-t="down"></label><span class="pill p-budget" data-t="pBudget"></span></span><span class="val" id="downV"></span></div>
+        <input type="range" id="cash" class="now" min="5000" max="40000" step="500" value="15000">
+        <p class="hint" data-t="downHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="rate" data-t="rate"></label><span class="pill p-bank" data-t="pBank"></span></span><span class="val" id="rateV"></span></div>
+        <input type="range" id="rate" class="later" min="2" max="10" step="0.125" value="6">
+        <p class="hint" data-t="rateHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><span class="lbl" data-t="term"></span><span class="pill p-bank" data-t="pBank"></span></span>
+          <div class="switch" role="group">
+            <button id="t15" type="button"></button>
+            <button id="t30" type="button"></button>
+          </div>
+        </div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="fees" data-t="fees"></label><span class="pill p-bank" data-t="pBank"></span></span><span class="val" id="feesV"></span></div>
+        <input type="range" id="fees" class="now" min="0" max="15000" step="250" value="6000">
+        <p class="hint" data-t="feesHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="other" data-t="other"></label></span><span class="val" id="otherV"></span></div>
+        <input type="range" id="other" min="0" max="15000" step="250" value="3000">
+        <p class="hint" data-t="otherHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="pre" data-t="pre"></label></span><span class="val" id="preV"></span></div>
+        <input type="range" id="pre" min="0" max="6000" step="100" value="1500">
+        <p class="hint" data-t="preHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="hoa">HOA</label><span class="pill p-home" data-t="pHome"></span></span><span class="val" id="hoaV"></span></div>
+        <input type="range" id="hoa" class="later" min="0" max="800" step="10" value="250">
+        <p class="hint" data-t="hoaHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="ins" data-t="ins"></label><span class="pill p-ins" data-t="pIns"></span></span><span class="val" id="insV"></span></div>
+        <input type="range" id="ins" class="later" min="0" max="400" step="5" value="50">
+        <p class="hint" data-t="insHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="pmi">PMI</label><span class="pill p-bank" data-t="pBank"></span></span><span class="val" id="pmiV"></span></div>
+        <input type="range" id="pmi" class="later" min="0" max="300" step="5" value="100">
+        <p class="hint" data-t="pmiHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="tax" data-t="tax"></label><span class="pill p-home" data-t="pHome"></span></span><span class="val" id="taxV"></span></div>
+        <input type="range" id="tax" class="later" min="0" max="800" step="10" value="180">
+        <p class="hint" data-t="taxHint"></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="ledger">
+    <div class="fig later"><div class="k" data-t="monthly"></div><div class="v" id="vMonthly"></div><div class="s" id="sMonthly"></div></div>
+    <div class="fig now"><div class="k" data-t="upfront"></div><div class="v" id="vUpfront"></div><div class="s" id="sUpfront"></div></div>
+    <div class="fig"><div class="k">APR</div><div class="v" id="vApr"></div><div class="s" id="sApr"></div></div>
+    <div class="fig"><div class="k" data-t="cost"></div><div class="v" id="vCost"></div><div class="s" id="sCost"></div></div>
+  </div>
+  <ul class="notes" id="notes"></ul>
+
+  <section class="trade" aria-labelledby="tradeH">
+    <h2 id="tradeH" data-t="tradeH"></h2>
+    <p data-t="tradeP"></p>
+    <div class="total-k" id="barK"></div>
+    <div class="cash-bar" aria-hidden="true"><div class="seg seg-bank" id="spBank"></div><div class="seg seg-other" id="spOther"></div><div class="seg seg-pre" id="spPre"></div><div class="seg seg-home" id="spHome"></div></div>
+    <div class="legend"><span><span class="sw" style="background:var(--now)"></span><span id="lgBank"></span></span><span><span class="sw" style="background:var(--muted)"></span><span id="lgOther"></span></span><span><span class="sw" style="background:var(--later)"></span><span id="lgPre"></span></span><span><span class="sw" style="background:var(--home)"></span><span id="lgHome"></span></span></div>
+    <p class="rolled" id="rolled"></p>
+    <div class="total-k" data-t="monthlyK"></div>
+    <div class="total-v" id="totV"></div>
+    <div class="delta" id="delta"></div>
+    <div id="curve" role="img"></div>
+    <div class="ctl">
+      <div class="ctl-head"><span class="lh"><label for="fees2" data-t="fees"></label><span class="pill p-bank" data-t="pBank"></span></span><span class="val" id="fees2V"></span></div>
+      <input type="range" id="fees2" class="now" min="0" max="15000" step="250" value="6000">
+    </div>
+    <ul class="notes" id="slopes"></ul>
+  </section>
+
+  <section class="apr" aria-labelledby="aprH">
+    <h2 id="aprH" data-t="aprH"></h2>
+    <p data-t="aprP"></p>
+
+    <div class="eq" aria-live="polite">
+      <div class="t-loan"><div class="n" id="eqLoan"></div><div class="c" data-t="eqLoan"></div></div>
+      <div class="op sign" id="eqSign">=</div>
+      <div class="t-fee"><div class="n" id="eqFee"></div><div class="c" data-t="eqFee"></div></div>
+      <div class="op">+</div>
+      <div class="t-pv"><div class="n" id="eqPv"></div><div class="c" id="cPv"></div></div>
+    </div>
+
+    <div class="bars" aria-hidden="true">
+      <div class="bar-name" data-t="barLoan"></div>
+      <div class="track"><div class="seg seg-loan" id="segLoan"></div></div>
+      <div class="bar-name" data-t="barYou"></div>
+      <div class="track"><div class="seg seg-fee" id="segFee"></div><div class="seg seg-pv" id="segPv"></div><div class="marker" id="marker"></div></div>
+    </div>
+
+    <div class="disc">
+      <div class="ctl-head"><label for="disc" data-t="discL"></label><span class="val" id="discV"></span></div>
+      <input type="range" id="disc" class="later" min="4" max="9" step="0.01" value="6">
+      <div class="marks" id="marks">
+        <div class="mk mk-rate" id="mkRate"><span class="tick"></span><span class="lab" id="mkRateL"></span></div>
+        <div class="mk mk-apr" id="mkApr"><span class="tick"></span><span class="lab" id="mkAprL"></span></div>
+      </div>
+      <div class="btns">
+        <button class="b" id="btnRate" type="button" data-t="btnRate"></button>
+        <button class="b primary" id="btnApr" type="button" data-t="btnApr"></button>
+      </div>
+      <p class="status" id="status" aria-live="polite"></p>
+      <p class="insight" id="insight"></p>
+    </div>
+
+    <div class="chart-wrap">
+      <h3 data-t="chartH"></h3>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--later-soft)"></span><span id="lgPaid"></span></span>
+        <span><span class="sw" style="background:var(--later)"></span><span id="lgToday"></span></span>
+      </div>
+      <div id="chart" role="img"></div>
+      <p class="cap" id="chartCap"></p>
+    </div>
+  </section>
+
+  <p class="foot" data-t="foot"></p>
+</main>
+
+<script>
+(function(){
+  var POINT_CUT = 0.25;
+  var S = { price:225000, cash:15000, hoa:250, ins:50, pmi:100, tax:180, other:3000, pre:1500, rate:6, points:0, fees:6000, term:30, disc:6, discMode:'rate', lang:'ru' };
+  var navRu = ((navigator.language || '') + '').toLowerCase().indexOf('ru') === 0;
+  try {
+    var saved = localStorage.getItem('mortgage-lang');
+    S.lang = (saved === 'ru' || saved === 'en') ? saved : (navRu ? 'ru' : 'en');
+  } catch (e) { S.lang = navRu ? 'ru' : 'en'; }
+
+  var T = {
+    ru: {
+      title: 'Как устроена ипотека',
+      lead: 'Двигайте ползунки и смотрите, как разовые платежи меняют ежемесячный и что на самом деле показывает APR.',
+      chooseH: 'Что вы можете выбрать',
+      chBank: 'Банк', chBankT: 'Ставка, комиссии, PMI и срок. Сравнивайте банки по APR.',
+      chHome: 'Жильё', chHomeT: 'Цена, HOA и налог.',
+      chIns: 'Страховку', chInsT: 'Цена у разных компаний разная.',
+      pBank: 'банк', pHome: 'жильё', pIns: 'страховка', pBudget: 'бюджет',
+      termsH: 'Условия кредита',
+      price: 'Цена жилья',
+      down: 'Первоначальный платёж',
+      downHint: 'Все деньги, которые вы даёте при покупке: и в жильё, и на комиссии банка.',
+      rate: 'Ставка',
+      rateHint: 'Ставка из предложения банка. Если банк снижает её за points, впишите сниженную ставку, а points добавьте к комиссиям.',
+      term: 'Срок',
+      yrs: function(n){ return n + ' лет'; },
+      points: 'Points',
+      pointsHint: 'Разовая плата банку за снижение ставки: 1 point = 1% суммы кредита. Здесь условно считаем, что каждый point снижает ставку на 0,25 п.п.; у банков по-разному.',
+      pointsNone: 'нет',
+      pointsVal: function(p, c, r){ return p + ' (' + c + '), ставка ' + r; },
+      fees: 'Комиссии банка',
+      feesHint: 'Все платы банку за оформление кредита, включая points и предоплаченные проценты. В Loan Estimate это раздел A и строка процентов в разделе F. Берутся из первоначального платежа, а если его не хватает, добавляются в кредит.',
+      other: 'Прочие расходы при покупке',
+      otherHint: 'Всё, что платится при покупке не банку: оценка, титул, юрист, сборы. В Loan Estimate это разделы B, C, E и H. Тоже берутся из первоначального платежа, но в APR не входят.',
+      pre: 'Предоплаты и escrow',
+      preHint: 'Страховка и налог вперёд и резерв на счёте escrow (разделы F и G, кроме процентов). Это не потеря денег, а ваши же платежи вперёд, но их тоже берут из первоначального платежа. В APR не входят.',
+      tax: 'Налог на жильё',
+      taxHint: 'Налог на недвижимость в месяц. Обычно банк собирает его вместе с платежом. В APR не входит.',
+      ins: 'Страховка',
+      hoaHint: 'Ежемесячный взнос ассоциации жильцов.',
+      insHint: 'Страховка жилья. HOA и страховка не часть кредита: в APR не входят и от ставки не зависят.',
+      pmiHint: 'Страховка для банка, если в жильё идёт меньше 20% цены; сумма есть в предложении банка. PMI входит в APR и обычно отменяется, когда долг падает до 78% цены.',
+      pmiVal: function(v, y){ return v + ' в месяц, первые ' + y + ' года'; },
+      pmiNone: 'не нужна',
+      perMo: function(v){ return v + ' в месяц'; },
+      monthlySub2: function(l, p, x, h, i){ return 'кредит ' + l + (p ? ', PMI ' + p : '') + ', налог ' + x + ', HOA ' + h + ', страховка ' + i; },
+      monthly: 'Каждый месяц',
+      monthlySub: function(n){ return n + ' платежей'; },
+      upfront: 'Первоначальный платёж',
+      upfrontSub: function(b, o, p, h){ return 'банку ' + b + ', прочие расходы ' + o + ', предоплаты ' + p + ', в жильё ' + h; },
+      aprSub: function(r){ return 'ставка по кредиту ' + r + ', по ней считается платёж'; },
+      cost: 'Сумма кредита',
+      costSub: function(v){ return 'расходы при покупке добавили ' + v; },
+      nDown: function(a, v){ return 'Ещё ' + a + ' взноса — и платёж меньше на ' + v + ' в месяц.'; },
+      nRate: function(v, p){ return 'Ставка выше на 1 п.п. — платёж больше на ' + v + ' в месяц (на ' + p + '%).'; },
+      nPoints: function(c, s, y){ return 'Points за ' + c + ' снижают платёж на ' + s + ' в месяц и окупаются за ' + y + ' года, если не продать жильё и не перекредитоваться раньше.'; },
+      nPmi: 'В жильё идёт меньше 20% цены, поэтому банк обычно добавит к платежу PMI, страховку для себя. Здесь она не учтена.',
+      nPmiOk: 'В жильё идёт 20% цены или больше, поэтому PMI обычно не нужна.',
+      tradeH: 'Комиссии и ежемесячный платёж',
+      tradeP: 'Из первоначального платежа сначала оплачиваются комиссии банка, прочие расходы и предоплаты, а остаток идёт в жильё. Чем больше комиссии, тем меньше идёт в жильё, тем больше кредит и тем выше платёж каждый месяц. Если расходы не помещаются в первоначальный платёж, разницу добавляют в кредит, и результат тот же. Двигайте точку на графике.',
+      barK: function(v){ return 'Первоначальный платёж ' + v; },
+      lgBank: function(v){ return 'банку ' + v; },
+      lgOther: function(v){ return 'прочие расходы ' + v; },
+      lgPre: function(v){ return 'предоплаты ' + v; },
+      lgHome: function(v){ return 'в жильё ' + v; },
+      rolledZero: 'Расходов нет: весь первоначальный платёж идёт в жильё.',
+      rolledNo: function(v){ return 'Комиссии и расходы забрали ' + v + ' из первоначального платежа, и на столько же вырос кредит.'; },
+      rolledYes: function(v){ return 'Комиссии и расходы забрали весь первоначальный платёж, и ещё ' + v + ' добавлено в кредит.'; },
+      monthlyK: 'Всё, что платите каждый месяц',
+      delta: function(v){ return 'из них ' + v + ' из-за комиссий'; },
+      deltaNo: 'комиссий нет',
+      axisX: 'комиссии банка',
+      curveAria: 'Ежемесячный платёж в зависимости от комиссий банка, при трёх ставках',
+      slope: function(r, f, v){ return 'При ставке ' + r + ' комиссии ' + f + ' добавляют к платежу ' + v + ' в месяц.'; },
+      slopeSum: 'Чем выше ставка, тем дороже каждый доллар комиссий в ежемесячном платеже.',
+      aprH: 'Что такое APR',
+      aprP: 'За кредит вы платите двумя способами: сразу (комиссии) и потом (ежемесячные платежи). Деньги, отданные позже, сегодня стоят меньше, поэтому каждый будущий платёж пересчитывают на сегодняшний день по какой-то ставке. Это называется дисконтированием. APR — ставка, при которой все ваши платежи, пересчитанные на сегодня, в точности равны сумме кредита.',
+      eqLoan: 'дал банк',
+      eqFee: 'комиссии сразу',
+      eqPv: function(n, p){ return n + ' платежей по кредиту' + (p ? ' и PMI' : '') + ', пересчитанные на сегодня'; },
+      barLoan: 'Дал банк',
+      barYou: 'Заплатите вы, в сегодняшних деньгах',
+      discL: 'Ставка дисконтирования',
+      btnRate: 'Как ставка по кредиту',
+      btnApr: 'Найти APR',
+      mRate: 'ставка', mApr: 'APR', mBoth: 'ставка = APR',
+      stMore: function(d){ return 'Ваши платежи стоят больше кредита на ' + d + '. Поднимите ставку дисконтирования.'; },
+      stLess: function(d){ return 'Ваши платежи стоят меньше кредита на ' + d + '. Опустите ставку дисконтирования.'; },
+      stEq: function(r){ return 'Сходится. Эта ставка и есть APR: ' + r + '.'; },
+      inRate: function(l, x){ return 'При ставке по кредиту сами платежи по кредиту стоят ровно сумму кредита, ' + l + '. Сверху остаются ' + x + ', поэтому настоящая цена кредита выше ставки.'; },
+      wFees: function(f){ return 'комиссии (' + f + ')'; },
+      wAnd: ' и ',
+      inNoFee: 'Комиссий и PMI нет, поэтому APR равен ставке по кредиту.',
+      inApr: 'При APR все ваши платежи, разовые и ежемесячные, стоят ровно столько, сколько дал банк. Поэтому предложения разных банков сравнивают по APR: в нём учтены и ставка, и комиссии.',
+      inFind: 'Найдите ставку, при которой обе стороны равны. Это и будет APR.',
+      chartH: 'Как дисконтирование уменьшает будущие платежи',
+      lgPaid: function(){ return 'заплачено за год'; },
+      lgToday: 'стоит сегодня',
+      chartCap: function(r, x, t){ return 'При ставке ' + r + ' платежи последнего года сегодня стоят в ' + x + ' раза меньше. Все тёмные столбики вместе дают ' + t + '.'; },
+      year1: '1-й год',
+      chartAria: 'Платежи по годам: сколько заплачено и сколько это стоит сегодня',
+      foot: 'Цифры примерные: точные суммы есть в Loan Estimate от банка.'
+    },
+    en: {
+      title: 'How a mortgage works',
+      lead: 'Move the sliders to see how what you pay upfront changes the monthly payment, and what APR actually measures.',
+      chooseH: 'What you can choose',
+      chBank: 'Lender', chBankT: 'Rate, fees, PMI and term. Compare lenders by APR.',
+      chHome: 'Home', chHomeT: 'Price, HOA and tax.',
+      chIns: 'Insurance', chInsT: 'Prices differ between companies.',
+      pBank: 'lender', pHome: 'home', pIns: 'insurer', pBudget: 'budget',
+      termsH: 'Loan terms',
+      price: 'Home price',
+      down: 'Upfront payment',
+      downHint: 'All the money you hand over at closing: toward the home and for lender fees.',
+      rate: 'Rate',
+      rateHint: 'The rate in the lender’s offer. If it’s lowered by points, enter the lowered rate and add the points to the fees.',
+      term: 'Term',
+      yrs: function(n){ return n + ' years'; },
+      points: 'Points',
+      pointsHint: 'A one-time fee to lower the rate: 1 point = 1% of the loan. Here we assume each point cuts the rate by 0.25 percentage points; lenders differ.',
+      pointsNone: 'none',
+      pointsVal: function(p, c, r){ return p + ' (' + c + '), rate ' + r; },
+      fees: 'Lender fees',
+      feesHint: 'Everything the lender charges to set up the loan, including points and prepaid interest. In the Loan Estimate, that’s section A plus the interest line in section F. Taken out of your upfront payment; if that isn’t enough, added to the loan.',
+      other: 'Other closing costs',
+      otherHint: 'Everything paid at closing that doesn’t go to the lender: appraisal, title, attorney, government fees. In the Loan Estimate, that’s sections B, C, E and H. Also taken out of your upfront payment, but not part of APR.',
+      pre: 'Prepaids and escrow',
+      preHint: 'Insurance and tax paid ahead, plus the escrow reserve (sections F and G, except interest). It isn’t money lost, it’s your own payments made in advance, but it still comes out of your upfront payment. Not part of APR.',
+      tax: 'Property tax',
+      taxHint: 'Property tax per month. The lender usually collects it together with the payment. Not part of APR.',
+      ins: 'Insurance',
+      hoaHint: 'Monthly homeowners association dues.',
+      insHint: 'Home insurance. HOA and insurance aren’t part of the loan: they’re not in APR and don’t depend on the rate.',
+      pmiHint: 'Insurance for the lender when less than 20% of the price goes toward the home; the amount is in the lender’s offer. PMI is part of APR and usually ends once the balance falls to 78% of the price.',
+      pmiVal: function(v, y){ return v + ' a month, first ' + y + ' years'; },
+      pmiNone: 'not needed',
+      perMo: function(v){ return v + ' a month'; },
+      monthlySub2: function(l, p, x, h, i){ return 'loan ' + l + (p ? ', PMI ' + p : '') + ', tax ' + x + ', HOA ' + h + ', insurance ' + i; },
+      monthly: 'Every month',
+      monthlySub: function(n){ return n + ' payments'; },
+      upfront: 'Upfront payment',
+      upfrontSub: function(b, o, p, h){ return 'to the lender ' + b + ', other costs ' + o + ', prepaids ' + p + ', toward the home ' + h; },
+      aprSub: function(r){ return 'loan rate ' + r + '; the payment is based on it'; },
+      cost: 'Loan amount',
+      costSub: function(v){ return 'closing costs added ' + v; },
+      nDown: function(a, v){ return 'Another ' + a + ' down lowers the payment by ' + v + ' a month.'; },
+      nRate: function(v, p){ return 'A rate 1 percentage point higher adds ' + v + ' a month (' + p + '% more).'; },
+      nPoints: function(c, s, y){ return 'Points costing ' + c + ' cut the payment by ' + s + ' a month and pay for themselves in ' + y + ' years, if you keep the loan that long.'; },
+      nPmi: 'Less than 20% of the price goes toward the home, so lenders usually add PMI, insurance that protects them, to the monthly payment. It isn’t included here.',
+      nPmiOk: 'At least 20% of the price goes toward the home, so PMI usually isn’t required.',
+      tradeH: 'Fees and the monthly payment',
+      tradeP: 'Lender fees, other closing costs and prepaids come out of your upfront payment first, and what’s left goes toward the home. The higher the fees, the less goes toward the home, the bigger the loan, and the higher the monthly payment. If the costs don’t fit in your upfront payment, the difference is added to the loan, with the same result. Drag the dot on the chart.',
+      barK: function(v){ return 'Upfront payment ' + v; },
+      lgBank: function(v){ return 'to the lender ' + v; },
+      lgOther: function(v){ return 'other costs ' + v; },
+      lgPre: function(v){ return 'prepaids ' + v; },
+      lgHome: function(v){ return 'toward the home ' + v; },
+      rolledZero: 'No closing costs: your whole upfront payment goes toward the home.',
+      rolledNo: function(v){ return 'Fees and costs took ' + v + ' out of your upfront payment, so the loan grew by the same amount.'; },
+      rolledYes: function(v){ return 'Fees and costs took your whole upfront payment, and another ' + v + ' was added to the loan.'; },
+      monthlyK: 'Everything you pay each month',
+      delta: function(v){ return v + ' of it is because of fees'; },
+      deltaNo: 'no fees',
+      axisX: 'lender fees',
+      curveAria: 'Monthly payment depending on lender fees, at three rates',
+      slope: function(r, f, v){ return 'At ' + r + ', fees of ' + f + ' add ' + v + ' to the monthly payment.'; },
+      slopeSum: 'The higher the rate, the more each dollar of fees adds to the monthly payment.',
+      aprH: 'What APR actually is',
+      aprP: 'You pay for a loan in two ways: right away (fees) and later (monthly payments). Money paid later is worth less today, so each future payment is converted into today’s dollars at some rate. That’s called discounting. APR is the rate at which all your payments, in today’s dollars, add up to exactly the loan amount.',
+      eqLoan: 'the bank lends',
+      eqFee: 'fees upfront',
+      eqPv: function(n, p){ return n + ' loan payments' + (p ? ' and PMI' : '') + ' in today’s dollars'; },
+      barLoan: 'The bank lends',
+      barYou: 'You pay, in today’s dollars',
+      discL: 'Discount rate',
+      btnRate: 'Use the loan rate',
+      btnApr: 'Find APR',
+      mRate: 'rate', mApr: 'APR', mBoth: 'rate = APR',
+      stMore: function(d){ return 'Your payments are worth ' + d + ' more than the loan. Raise the discount rate.'; },
+      stLess: function(d){ return 'Your payments are worth ' + d + ' less than the loan. Lower the discount rate.'; },
+      stEq: function(r){ return 'It balances. This rate is the APR: ' + r + '.'; },
+      inRate: function(l, x){ return 'At the loan rate, the loan payments alone are worth exactly the loan, ' + l + '. On top come ' + x + ', so the true cost is higher than the rate.'; },
+      wFees: function(f){ return 'fees (' + f + ')'; },
+      wAnd: ' and ',
+      inNoFee: 'No fees and no PMI, so APR equals the loan rate.',
+      inApr: 'At the APR, everything you pay, upfront and monthly, is worth exactly what the bank lent. That’s why offers are compared by APR: it includes both the rate and the fees.',
+      inFind: 'Find the rate at which both sides match. That’s the APR.',
+      chartH: 'How discounting shrinks future payments',
+      lgPaid: function(){ return 'paid that year'; },
+      lgToday: 'worth today',
+      chartCap: function(r, x, t){ return 'At ' + r + ', the final year’s payments are worth ' + x + ' times less today. All the dark bars together add up to ' + t + '.'; },
+      year1: 'year 1',
+      chartAria: 'Payments by year: amount paid and what it is worth today',
+      foot: 'The numbers are approximate; the exact amounts are in the lender’s Loan Estimate.'
+    }
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function L(){ return T[S.lang]; }
+  function loc(){ return S.lang === 'ru' ? 'ru-RU' : 'en-US'; }
+  function money(v, d){ d = d || 0; return new Intl.NumberFormat(loc(), { style:'currency', currency:'USD', minimumFractionDigits:d, maximumFractionDigits:d }).format(v); }
+  function pct(v){ return new Intl.NumberFormat(loc(), { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v) + '%'; }
+  function num(v, d){ return new Intl.NumberFormat(loc(), { minimumFractionDigits:d, maximumFractionDigits:d }).format(v); }
+  function numMax1(v){ return new Intl.NumberFormat(loc(), { maximumFractionDigits:1 }).format(v); }
+  function clamp(v, a, b){ return Math.min(b, Math.max(a, v)); }
+
+  function pmt(loan, ratePct, n){ var i = ratePct / 1200; if (i === 0) return loan / n; return loan * i / (1 - Math.pow(1 + i, -n)); }
+  function pv(m, ratePct, n){ var i = ratePct / 1200; if (i === 0) return m * n; return m * (1 - Math.pow(1 + i, -n)) / i; }
+  function solveAPR(m, n, net, pmi, K){
+    net = Math.max(net, 1);
+    var lo = 0, hi = 60;
+    for (var k = 0; k < 120; k++){ var mid = (lo + hi) / 2; if (pv(m, mid, n) + (K ? pv(pmi, mid, K) : 0) > net) lo = mid; else hi = mid; }
+    return (lo + hi) / 2;
+  }
+
+  function model(){
+    var note = Math.max(0.25, S.rate - S.points * POINT_CUT);
+    var n = S.term * 12;
+    var loan = (S.price - S.cash + S.fees + S.other + S.pre) / (1 - S.points / 100);
+    var pointsCost = loan * S.points / 100;
+    var upfrontFees = pointsCost + S.fees;
+    var toBank = Math.min(S.cash, upfrontFees);
+    var toOther = Math.min(S.cash - toBank, S.other);
+    var toPre = Math.min(S.cash - toBank - toOther, S.pre);
+    var down = S.cash - toBank - toOther - toPre;
+    var rolled = Math.max(0, upfrontFees + S.other + S.pre - S.cash);
+    var M = pmt(loan, note, n);
+    var K = 0;
+    if (S.pmi > 0){
+      var jr = note / 1200, lim = 0.78 * S.price, bal = loan;
+      while (bal > lim && K < n){ bal = bal * (1 + jr) - M; K++; }
+    }
+    var apr = (upfrontFees > 0.5 || K > 0) ? solveAPR(M, n, loan - upfrontFees, S.pmi, K) : note;
+    return { pmiK:K, pmiNow:(K > 0 ? S.pmi : 0), down:down, toBank:toBank, toOther:toOther, toPre:toPre, rolled:rolled, downPct:down / S.price * 100, loan:loan, note:note, n:n, M:M, pointsCost:pointsCost, upfrontFees:upfrontFees, apr:apr, interest:M * n - loan };
+  }
+
+  var last = null;
+
+  function render(){
+    var t = L(), m = model();
+    last = m;
+
+    $('priceV').textContent = money(S.price);
+    $('downV').textContent = money(S.cash);
+    $('fees2V').textContent = money(S.fees);
+    $('fees').value = S.fees; $('fees2').value = S.fees;
+    $('rateV').textContent = pct(S.rate);
+    $('feesV').textContent = money(S.fees);
+    $('hoaV').textContent = t.perMo(money(S.hoa));
+    $('insV').textContent = t.perMo(money(S.ins));
+    $('otherV').textContent = money(S.other);
+    $('preV').textContent = money(S.pre);
+    $('taxV').textContent = t.perMo(money(S.tax));
+    $('pmiV').textContent = !S.pmi ? t.perMo(money(0)) : (m.pmiK ? t.pmiVal(money(S.pmi), num(m.pmiK / 12, 1)) : t.pmiNone);
+    $('t15').textContent = t.yrs(15); $('t30').textContent = t.yrs(30);
+    $('t15').setAttribute('aria-pressed', S.term === 15); $('t30').setAttribute('aria-pressed', S.term === 30);
+
+    $('vMonthly').textContent = money(m.M + S.hoa + S.ins + S.tax + m.pmiNow);
+    $('sMonthly').textContent = t.monthlySub2(money(m.M), m.pmiNow ? money(m.pmiNow) : '', money(S.tax), money(S.hoa), money(S.ins));
+    $('vUpfront').textContent = money(S.cash);
+    $('sUpfront').textContent = t.upfrontSub(money(m.toBank), money(m.toOther), money(m.toPre), money(m.down));
+    $('vApr').textContent = pct(m.apr);
+    $('sApr').textContent = t.aprSub(pct(m.note));
+    $('vCost').textContent = money(m.loan);
+    $('sCost').textContent = t.costSub(money(m.upfrontFees + S.other + S.pre));
+
+    var notes = [];
+    if (S.points > 0){
+      var save = pmt(S.price - S.cash + S.fees, S.rate, m.n) - m.M;
+      if (save > 0) notes.push(t.nPoints(money(m.pointsCost), money(save), num(m.pointsCost / save / 12, 1)));
+    }
+    $('notes').innerHTML = '';
+    notes.forEach(function(s){ var li = document.createElement('li'); li.textContent = s; $('notes').appendChild(li); });
+
+    // discount rate
+    var dmin = Math.max(0.25, Math.floor((m.note - 2) * 4) / 4);
+    var dmax = Math.ceil((Math.max(m.apr, m.note) + 1.5) * 4) / 4;
+    if (S.discMode === 'rate') S.disc = m.note;
+    else if (S.discMode === 'apr') S.disc = m.apr;
+    S.disc = clamp(S.disc, dmin, dmax);
+    var di = $('disc');
+    di.min = dmin; di.max = dmax; di.value = S.disc;
+    $('discV').textContent = pct(S.disc);
+
+    var pvAll = pv(m.M, S.disc, m.n) + (m.pmiK ? pv(S.pmi, S.disc, m.pmiK) : 0);
+    var right = m.upfrontFees + pvAll;
+    var diff = right - m.loan;
+    var balanced = Math.abs(S.disc - m.apr) < 0.005;
+    var atRate = Math.abs(S.disc - m.note) < 0.005;
+    var noFees = m.upfrontFees < 0.5 && !m.pmiK;
+
+    $('eqLoan').textContent = money(m.loan);
+    $('eqFee').textContent = money(m.upfrontFees);
+    $('eqPv').textContent = money(pvAll);
+    $('cPv').textContent = t.eqPv(m.n, m.pmiK > 0);
+    var sign = $('eqSign');
+    sign.textContent = balanced ? (Math.abs(diff) < 0.5 ? '=' : '≈') : (diff > 0 ? '<' : '>');
+    sign.classList.toggle('ok', balanced);
+
+    var scale = Math.max(m.loan, right) * 1.04;
+    $('segLoan').style.width = (m.loan / scale * 100) + '%';
+    var fw = m.upfrontFees / scale * 100, pw = pvAll / scale * 100;
+    $('segFee').style.width = fw + '%';
+    $('segPv').style.width = pw + '%';
+    $('segPv').classList.toggle('solo', fw < 0.01);
+    $('marker').style.left = (m.loan / scale * 100) + '%';
+
+    // marks on the slider
+    function pos(v){ return clamp((v - dmin) / (dmax - dmin), 0, 1); }
+    var pr = pos(m.note), pa = pos(m.apr);
+    var mr = $('mkRate'), ma = $('mkApr');
+    mr.style.left = 'calc(11px + (100% - 22px) * ' + pr + ')';
+    ma.style.left = 'calc(11px + (100% - 22px) * ' + pa + ')';
+    mr.className = 'mk mk-rate'; ma.className = 'mk mk-apr';
+    if (noFees){
+      mr.style.display = 'none';
+      $('mkAprL').textContent = t.mBoth;
+    } else {
+      mr.style.display = '';
+      $('mkRateL').textContent = t.mRate;
+      $('mkAprL').textContent = t.mApr;
+      if (pa - pr < 0.14){ mr.classList.add('l'); ma.classList.add('r'); }
+    }
+    if (pa > 0.9) ma.classList.add('l');
+    if (pr < 0.08) mr.classList.add('r');
+
+    var st = $('status');
+    st.className = 'status' + (balanced ? ' ok' : '');
+    st.textContent = balanced ? t.stEq(pct(m.apr)) : (diff > 0 ? t.stMore(money(diff)) : t.stLess(money(-diff)));
+    $('insight').textContent = noFees ? t.inNoFee : (atRate ? t.inRate(money(m.loan), [m.upfrontFees >= 0.5 ? t.wFees(money(m.upfrontFees)) : '', m.pmiK ? 'PMI' : ''].filter(Boolean).join(t.wAnd)) : (balanced ? t.inApr : t.inFind));
+
+    drawTrade(m);
+    drawChart(m);
+  }
+
+  function niceStep(raw){ var p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+  var CPL = 64, CPR = 10;
+  function payFor(fees, r, n){ return pmt((S.price - S.cash + fees + S.other + S.pre) / (1 - S.points / 100), r, n) + S.hoa + S.ins + S.tax + pmiOn; }
+  var FMAX = 15000, pmiOn = 0;
+  function drawTrade(m){
+    var t = L();
+    $('barK').textContent = t.barK(money(S.cash));
+    $('spBank').style.width = (m.toBank / S.cash * 100) + '%';
+    $('spOther').style.width = (m.toOther / S.cash * 100) + '%';
+    $('spPre').style.width = (m.toPre / S.cash * 100) + '%';
+    $('spHome').style.width = (m.down / S.cash * 100) + '%';
+    $('lgBank').textContent = t.lgBank(money(m.toBank));
+    $('lgOther').textContent = t.lgOther(money(m.toOther));
+    $('lgPre').textContent = t.lgPre(money(m.toPre));
+    $('lgHome').textContent = t.lgHome(money(m.down));
+    var costs = m.upfrontFees + S.other + S.pre;
+    $('rolled').textContent = costs < 0.5 ? t.rolledZero : (m.rolled > 0.5 ? t.rolledYes(money(m.rolled)) : t.rolledNo(money(costs)));
+    pmiOn = m.pmiNow;
+    $('totV').textContent = money(m.M + S.hoa + S.ins + S.tax + m.pmiNow);
+    $('delta').textContent = m.upfrontFees < 0.5 ? t.deltaNo : t.delta(money(pmt(m.upfrontFees, m.note, m.n)));
+
+    var box = $('curve');
+    var W = Math.max(260, box.clientWidth || 340), H = 230, pt = 12, pb = 38;
+    var kf = new Intl.NumberFormat(loc(), { style:'currency', currency:'USD', notation:'compact', maximumFractionDigits:0 });
+    var rates = [Math.max(0.25, m.note - 1), m.note, m.note + 1];
+    var lo = payFor(0, rates[0], m.n), hi = payFor(FMAX, rates[2], m.n);
+    var stepY = niceStep((hi - lo) / 4), botY = Math.floor(lo / stepY) * stepY, topY = Math.ceil(hi / stepY) * stepY;
+    function X(f){ return CPL + f / FMAX * (W - CPL - CPR); }
+    function Y(v){ return pt + (1 - (v - botY) / (topY - botY)) * (H - pt - pb); }
+    var g = '', v;
+    for (v = botY; v <= topY + 0.5; v += stepY){
+      var gy = Y(v).toFixed(1);
+      g += '<line x1="' + CPL + '" x2="' + (W - CPR) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--line)" stroke-width="1"/>';
+      g += '<text x="' + (CPL - 6) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + money(v) + '</text>';
+    }
+    rates.forEach(function(r, k){
+      var cur = k === 1, y0 = Y(payFor(0, r, m.n)), y1 = Y(payFor(FMAX, r, m.n));
+      g += '<line x1="' + X(0).toFixed(1) + '" y1="' + y0.toFixed(1) + '" x2="' + X(FMAX).toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="' + (cur ? 'var(--later)' : 'var(--muted)') + '" stroke-width="' + (cur ? 3 : 1.5) + '" stroke-linecap="round"/>';
+      g += '<text x="' + (X(0) + 4).toFixed(1) + '" y="' + (y0 - 6).toFixed(1) + '"' + (cur ? ' class="lbl-cur"' : '') + '>' + pct(r) + '</text>';
+    });
+    var xd = X(S.fees), yd = Y(m.M + S.hoa + S.ins + S.tax + m.pmiNow);
+    g += '<line x1="' + xd.toFixed(1) + '" x2="' + xd.toFixed(1) + '" y1="' + yd.toFixed(1) + '" y2="' + (H - pb) + '" stroke="var(--now)" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    g += '<line x1="' + CPL + '" x2="' + xd.toFixed(1) + '" y1="' + yd.toFixed(1) + '" y2="' + yd.toFixed(1) + '" stroke="var(--later)" stroke-width="1.5" stroke-dasharray="4 3"/>';
+    [rates[0], rates[2]].forEach(function(r){
+      g += '<circle cx="' + xd.toFixed(1) + '" cy="' + Y(payFor(S.fees, r, m.n)).toFixed(1) + '" r="3.5" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.5"/>';
+    });
+    g += '<circle cx="' + xd.toFixed(1) + '" cy="' + yd.toFixed(1) + '" r="7" fill="var(--later)" stroke="var(--surface)" stroke-width="2.5"/>';
+    [0, 5000, 10000, 15000].forEach(function(f){
+      var an = f === 0 ? 'start' : (f === FMAX ? 'end' : 'middle');
+      g += '<text x="' + X(f).toFixed(1) + '" y="' + (H - 20) + '" text-anchor="' + an + '">' + kf.format(f) + '</text>';
+    });
+    g += '<text x="' + ((X(0) + X(FMAX)) / 2).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="middle">' + t.axisX + '</text>';
+    box.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' + g + '</svg>';
+    box.setAttribute('aria-label', t.curveAria);
+
+    var F = m.upfrontFees > 0.5 ? m.upfrontFees : 5000;
+    var sl = $('slopes');
+    sl.innerHTML = '';
+    rates.forEach(function(r, k){
+      var li = document.createElement('li');
+      li.textContent = t.slope(pct(r), money(F), money(pmt(F, r, m.n)));
+      if (k === 1) li.className = 'cur';
+      sl.appendChild(li);
+    });
+    var li2 = document.createElement('li');
+    li2.textContent = t.slopeSum;
+    sl.appendChild(li2);
+  }
+
+  function drawChart(m){
+    var t = L(), box = $('chart');
+    var W = Math.max(260, box.clientWidth || 340), H = 200, pl = 2, pr = 2, pt = 6, pb = 22;
+    var yrs = S.term, i = S.disc / 1200, pays = [], pvs = [], tot = 0;
+    for (var y = 1; y <= yrs; y++){
+      var s = 0;
+      var pa = 0;
+      for (var k = (y - 1) * 12 + 1; k <= y * 12; k++){ var c = m.M + (k <= m.pmiK ? S.pmi : 0); pa += c; s += c / Math.pow(1 + i, k); }
+      pays.push(pa); pvs.push(s); tot += s;
+    }
+    var paid = Math.max.apply(null, pays);
+    var cw = (W - pl - pr) / yrs, bw = Math.max(2, cw * 0.7), h = H - pt - pb;
+    var g = '';
+    for (var j = 0; j < yrs; j++){
+      var x = pl + j * cw + (cw - bw) / 2, hv = pvs[j] / paid * h, hp = pays[j] / paid * h;
+      g += '<rect x="' + x.toFixed(1) + '" y="' + (pt + h - hp).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hp.toFixed(1) + '" rx="1.5" fill="var(--later-soft)"/>';
+      g += '<rect x="' + x.toFixed(1) + '" y="' + (pt + h - hv).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hv.toFixed(1) + '" rx="1.5" fill="var(--later)"/>';
+    }
+    var ticks = yrs === 30 ? [1, 5, 10, 15, 20, 25, 30] : [1, 5, 10, 15];
+    ticks.forEach(function(tk){
+      var cx = pl + (tk - 1) * cw + cw / 2;
+      if (tk === 1) g += '<text x="' + (pl + (cw - bw) / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="start">' + t.year1 + '</text>';
+      else g += '<text x="' + cx.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + tk + '</text>';
+    });
+    box.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' + g + '</svg>';
+    box.setAttribute('aria-label', t.chartAria);
+    $('lgPaid').textContent = t.lgPaid(money(paid));
+    $('lgToday').textContent = t.lgToday;
+    $('chartCap').textContent = t.chartCap(pct(S.disc), num(pays[yrs - 1] / pvs[yrs - 1], 1), money(tot));
+  }
+
+  function setLang(l){
+    S.lang = l;
+    try { localStorage.setItem('mortgage-lang', l); } catch (e) {}
+    document.documentElement.lang = l;
+    document.title = T[l].title;
+    var els = document.querySelectorAll('[data-t]');
+    for (var k = 0; k < els.length; k++){ var v = T[l][els[k].getAttribute('data-t')]; if (typeof v === 'string') els[k].textContent = v; }
+    $('langRu').setAttribute('aria-pressed', l === 'ru');
+    $('langEn').setAttribute('aria-pressed', l === 'en');
+    render();
+  }
+
+  var anim = 0;
+  function stopAnim(){ if (anim) { cancelAnimationFrame(anim); anim = 0; } }
+  function keep(el, fn){
+    var before = el.getBoundingClientRect().top;
+    fn();
+    var d = el.getBoundingClientRect().top - before;
+    if (Math.abs(d) > 0.5) window.scrollBy(0, d);
+  }
+  function bind(id, key, parse){
+    $(id).addEventListener('input', function(e){ stopAnim(); keep(e.target, function(){ S[key] = parse(e.target.value); render(); }); });
+  }
+  bind('price', 'price', Number);
+  bind('cash', 'cash', Number);
+  bind('fees2', 'fees', Number);
+  bind('hoa', 'hoa', Number);
+  bind('ins', 'ins', Number);
+  bind('pmi', 'pmi', Number);
+  bind('tax', 'tax', Number);
+  bind('other', 'other', Number);
+  bind('pre', 'pre', Number);
+  bind('rate', 'rate', Number);
+  bind('fees', 'fees', Number);
+  $('t15').addEventListener('click', function(e){ var b = e.currentTarget; keep(b, function(){ S.term = 15; render(); }); });
+  $('t30').addEventListener('click', function(e){ var b = e.currentTarget; keep(b, function(){ S.term = 30; render(); }); });
+  $('disc').addEventListener('input', function(e){ stopAnim(); keep(e.target, function(){ S.discMode = 'custom'; S.disc = Number(e.target.value); render(); }); });
+  $('btnRate').addEventListener('click', function(){ stopAnim(); S.discMode = 'rate'; render(); });
+  $('btnApr').addEventListener('click', function(){
+    stopAnim();
+    var target = last ? last.apr : S.disc;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce){ S.discMode = 'apr'; render(); return; }
+    var from = S.disc, t0 = performance.now(), dur = 650;
+    S.discMode = 'custom';
+    function step(now){
+      var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      S.disc = from + (target - from) * e;
+      if (k < 1){ render(); anim = requestAnimationFrame(step); }
+      else { anim = 0; S.discMode = 'apr'; render(); }
+    }
+    anim = requestAnimationFrame(step);
+  });
+  $('langRu').addEventListener('click', function(){ setLang('ru'); });
+  $('langEn').addEventListener('click', function(){ setLang('en'); });
+
+  var dragging = false;
+  function curvePick(e){
+    var r = $('curve').getBoundingClientRect(), W = Math.max(260, r.width);
+    var p = clamp(Math.round((e.clientX - r.left - CPL) / (W - CPL - CPR) * FMAX / 250) * 250, 0, FMAX);
+    if (p !== S.fees){ keep($('curve'), function(){ S.fees = p; render(); }); }
+  }
+  $('curve').addEventListener('pointerdown', function(e){ dragging = true; try { $('curve').setPointerCapture(e.pointerId); } catch (err) {} curvePick(e); });
+  $('curve').addEventListener('pointermove', function(e){ if (dragging) curvePick(e); });
+  $('curve').addEventListener('pointerup', function(){ dragging = false; });
+  $('curve').addEventListener('pointercancel', function(){ dragging = false; });
+
+  function redraw(){ if (last){ drawTrade(last); drawChart(last); } }
+  if (window.ResizeObserver){ var ro = new ResizeObserver(redraw); ro.observe($('chart')); ro.observe($('curve')); }
+  else window.addEventListener('resize', redraw);
+
+  setLang(S.lang);
+})();
+</script>
+</body>
+</html>
