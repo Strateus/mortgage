@@ -70,6 +70,9 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
 #sMonthly, #sUpfront{ min-height:4.05em; }
 .seg-other{ background:var(--muted); }
 .seg-pre{ background:var(--later); }
+.cash-bar.who{ height:12px; margin-top:12px; }
+.seg-mine{ background:var(--ink); }
+.seg-seller, .sw-seller{ background:repeating-linear-gradient(135deg, var(--muted) 0 3px, transparent 3px 6px); }
 .fig.now .v{ color:var(--now); }
 .fig.later .v{ color:var(--later); }
 
@@ -161,6 +164,13 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
 .lh{ display:inline-flex; align-items:center; flex-wrap:wrap; gap:2px 8px; min-width:0; }
 .pill{ font-size:11.5px; font-weight:600; line-height:1.5; padding:0 8px; border-radius:999px; border:1.5px solid currentColor; }
 
+:root{ --bad:#b3261e; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bad:#f2867c; } }
+:root[data-theme="dark"]{ --bad:#f2867c; }
+.verdict{ font-size:17px; font-weight:600; line-height:1.4; margin:16px 0 4px; padding:12px 14px; border-left:4px solid var(--bad); background:var(--surface); border-radius:0 10px 10px 0; }
+.verdict.ok{ border-left-color:var(--ok); }
+.hint.est{ font-style:italic; color:var(--ink); }
+
 @media (prefers-reduced-motion: reduce){ .seg, .marker{ transition:none; } }
 </style>
 </head>
@@ -190,12 +200,17 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
     <div class="ctls">
       <div class="ctl">
         <div class="ctl-head"><span class="lh"><label for="price" data-t="price"></label><span class="pill p-home" data-t="pHome"></span></span><span class="val" id="priceV"></span></div>
-        <input type="range" id="price" min="150000" max="300000" step="5000" value="225000">
+        <input type="range" id="price" min="150000" max="300000" step="5000" value="200000">
       </div>
       <div class="ctl">
         <div class="ctl-head"><span class="lh"><label for="cash" data-t="down"></label><span class="pill p-budget" data-t="pBudget"></span></span><span class="val" id="downV"></span></div>
-        <input type="range" id="cash" class="now" min="5000" max="40000" step="500" value="15000">
+        <input type="range" id="cash" class="now" min="5000" max="40000" step="500" value="20000">
         <p class="hint" data-t="downHint"></p>
+      </div>
+      <div class="ctl">
+        <div class="ctl-head"><span class="lh"><label for="budget" data-t="budget"></label><span class="pill p-budget" data-t="pBudget"></span></span><span class="val" id="budgetV"></span></div>
+        <input type="range" id="budget" min="1000" max="4000" step="10" value="1500">
+        <p class="hint" data-t="budgetHint"></p>
       </div>
       <div class="ctl">
         <div class="ctl-head"><span class="lh"><label for="rate" data-t="rate"></label><span class="pill p-bank" data-t="pBank"></span></span><span class="val" id="rateV"></span></div>
@@ -217,13 +232,15 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       </div>
       <div class="ctl">
         <div class="ctl-head"><span class="lh"><label for="other" data-t="other"></label></span><span class="val" id="otherV"></span></div>
-        <input type="range" id="other" min="0" max="15000" step="250" value="3000">
+        <input type="range" id="other" min="0" max="15000" step="50" value="3000">
         <p class="hint" data-t="otherHint"></p>
+        <p class="hint est" id="otherEst" data-t="otherEst"></p>
       </div>
       <div class="ctl">
         <div class="ctl-head"><span class="lh"><label for="pre" data-t="pre"></label></span><span class="val" id="preV"></span></div>
-        <input type="range" id="pre" min="0" max="6000" step="100" value="1500">
+        <input type="range" id="pre" min="0" max="6000" step="50" value="1600">
         <p class="hint" data-t="preHint"></p>
+        <p class="hint est" id="preEst" data-t="preEst"></p>
       </div>
       <div class="ctl">
         <div class="ctl-head"><span class="lh"><label for="hoa">HOA</label><span class="pill p-home" data-t="pHome"></span></span><span class="val" id="hoaV"></span></div>
@@ -254,14 +271,17 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
     <div class="fig"><div class="k">APR</div><div class="v" id="vApr"></div><div class="s" id="sApr"></div></div>
     <div class="fig"><div class="k" data-t="cost"></div><div class="v" id="vCost"></div><div class="s" id="sCost"></div></div>
   </div>
+  <p class="verdict" id="verdict" aria-live="polite"></p>
   <ul class="notes" id="notes"></ul>
 
   <section class="trade" aria-labelledby="tradeH">
     <h2 id="tradeH" data-t="tradeH"></h2>
     <p data-t="tradeP"></p>
     <div class="total-k" id="barK"></div>
-    <div class="cash-bar" aria-hidden="true"><div class="seg seg-bank" id="spBank"></div><div class="seg seg-other" id="spOther"></div><div class="seg seg-pre" id="spPre"></div><div class="seg seg-home" id="spHome"></div></div>
-    <div class="legend"><span><span class="sw" style="background:var(--now)"></span><span id="lgBank"></span></span><span><span class="sw" style="background:var(--muted)"></span><span id="lgOther"></span></span><span><span class="sw" style="background:var(--later)"></span><span id="lgPre"></span></span><span><span class="sw" style="background:var(--home)"></span><span id="lgHome"></span></span></div>
+    <div class="cash-bar" aria-hidden="true"><div class="seg seg-home" id="spHome"></div><div class="seg seg-bank" id="spBank"></div><div class="seg seg-other" id="spOther"></div><div class="seg seg-pre" id="spPre"></div></div>
+    <div class="legend"><span><span class="sw" style="background:var(--home)"></span><span id="lgHome"></span></span><span><span class="sw" style="background:var(--now)"></span><span id="lgBank"></span></span><span><span class="sw" style="background:var(--muted)"></span><span id="lgOther"></span></span><span><span class="sw" style="background:var(--later)"></span><span id="lgPre"></span></span></div>
+    <div class="cash-bar who" aria-hidden="true"><div class="seg seg-mine" id="spMine"></div><div class="seg seg-seller" id="spSeller"></div></div>
+    <div class="legend"><span><span class="sw" style="background:var(--ink)"></span><span id="lgMine"></span></span><span><span class="sw sw-seller"></span><span id="lgSeller"></span></span></div>
     <p class="rolled" id="rolled"></p>
     <div class="total-k" data-t="monthlyK"></div>
     <div class="total-v" id="totV"></div>
@@ -324,8 +344,8 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
 
 <script>
 (function(){
-  var POINT_CUT = 0.25;
-  var S = { price:225000, cash:15000, hoa:250, ins:50, pmi:100, tax:180, other:3000, pre:1500, rate:6, points:0, fees:6000, term:30, disc:6, discMode:'rate', lang:'ru' };
+  var POINT_CUT = 0.25, MIN_DOWN = 0.035, OTHER_PCT = 0.015, PRE_PCT = 0.008;
+  var S = { price:200000, cash:20000, budget:1500, hoa:250, ins:50, pmi:100, tax:180, other:3000, pre:1600, otherAuto:true, preAuto:true, rate:6, points:0, fees:6000, term:30, disc:6, discMode:'rate', lang:'ru' };
   var navRu = ((navigator.language || '') + '').toLowerCase().indexOf('ru') === 0;
   try {
     var saved = localStorage.getItem('mortgage-lang');
@@ -344,7 +364,19 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       termsH: 'Условия кредита',
       price: 'Цена жилья',
       down: 'Первоначальный платёж',
-      downHint: 'Все деньги, которые вы даёте при покупке: и в жильё, и на комиссии банка.',
+      downHint: 'Все деньги, которые вы даёте при покупке: и в жильё, и на расходы. В жильё нужно минимум 3,5% цены.',
+      budget: 'Бюджет в месяц',
+      budgetHint: 'Сколько вы можете платить каждый месяц за всё вместе: кредит, PMI, налог, HOA и страховку.',
+      vOk: function(f, c){ return 'Укладывается в бюджет. Комиссии банка могут быть до ' + f + ', сейчас ' + c + '.'; },
+      vOkMax: function(f){ return 'Укладывается в бюджет с запасом: платёж останется в бюджете даже при комиссиях больше ' + f + '.'; },
+      vFees: function(o, f, c){ return 'Не укладывается на ' + o + ' в месяц. Нужен банк с комиссиями до ' + f + ', сейчас ' + c + '.'; },
+      vPrice: function(o, p1, f, p0){ return 'Не укладывается на ' + o + ' в месяц, и даже без комиссий не уложиться. С комиссиями ' + f + ' подойдёт жильё до ' + p1 + ', без комиссий — до ' + p0 + '.'; },
+      vPrice0: function(o, p0){ return 'Не укладывается на ' + o + ' в месяц. Подойдёт жильё до ' + p0 + '.'; },
+      vLow: 'Бюджет меньше постоянных платежей: налог, HOA, страховка и PMI уже больше него.',
+      bLine: function(v){ return 'ваш бюджет ' + v; },
+      bMax: function(v){ return 'до ' + v; },
+      bAbove: function(v){ return 'бюджет ' + v + ' выше графика'; },
+      bBelow: function(v){ return 'бюджет ' + v + ' ниже графика'; },
       rate: 'Ставка',
       rateHint: 'Ставка из предложения банка. Если банк снижает её за points, впишите сниженную ставку, а points добавьте к комиссиям.',
       term: 'Срок',
@@ -354,11 +386,13 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       pointsNone: 'нет',
       pointsVal: function(p, c, r){ return p + ' (' + c + '), ставка ' + r; },
       fees: 'Комиссии банка',
-      feesHint: 'Все платы банку за оформление кредита, включая points и предоплаченные проценты. В Loan Estimate это раздел A и строка процентов в разделе F. Берутся из первоначального платежа, а если его не хватает, добавляются в кредит.',
+      feesHint: 'Все платы банку за оформление кредита, включая points и предоплаченные проценты. В Loan Estimate это раздел A и строка процентов в разделе F. Берутся из первоначального платежа.',
       other: 'Прочие расходы при покупке',
       otherHint: 'Всё, что платится при покупке не банку: оценка, титул, юрист, сборы. В Loan Estimate это разделы B, C, E и H. Тоже берутся из первоначального платежа, но в APR не входят.',
       pre: 'Предоплаты и escrow',
       preHint: 'Страховка и налог вперёд и резерв на счёте escrow (разделы F и G, кроме процентов). Это не потеря денег, а ваши же платежи вперёд, но их тоже берут из первоначального платежа. В APR не входят.',
+      otherEst: 'Оценка: 1,5% цены. Точная сумма будет в Loan Estimate.',
+      preEst: 'Оценка: 0,8% цены. Точная сумма будет в Loan Estimate.',
       tax: 'Налог на жильё',
       taxHint: 'Налог на недвижимость в месяц. Обычно банк собирает его вместе с платежом. В APR не входит.',
       ins: 'Страховка',
@@ -374,23 +408,28 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       upfront: 'Первоначальный платёж',
       upfrontSub: function(b, o, p, h){ return 'банку ' + b + ', прочие расходы ' + o + ', предоплаты ' + p + ', в жильё ' + h; },
       aprSub: function(r){ return 'ставка по кредиту ' + r + ', по ней считается платёж'; },
-      cost: 'Сумма кредита',
-      costSub: function(v){ return 'расходы при покупке добавили ' + v; },
+      cost: 'Цена с расходами',
+      costSub: function(c, l){ return 'ваши ' + c + ' + кредит ' + l; },
       nDown: function(a, v){ return 'Ещё ' + a + ' взноса — и платёж меньше на ' + v + ' в месяц.'; },
       nRate: function(v, p){ return 'Ставка выше на 1 п.п. — платёж больше на ' + v + ' в месяц (на ' + p + '%).'; },
       nPoints: function(c, s, y){ return 'Points за ' + c + ' снижают платёж на ' + s + ' в месяц и окупаются за ' + y + ' года, если не продать жильё и не перекредитоваться раньше.'; },
       nPmi: 'В жильё идёт меньше 20% цены, поэтому банк обычно добавит к платежу PMI, страховку для себя. Здесь она не учтена.',
       nPmiOk: 'В жильё идёт 20% цены или больше, поэтому PMI обычно не нужна.',
       tradeH: 'Комиссии и ежемесячный платёж',
-      tradeP: 'Из первоначального платежа сначала оплачиваются комиссии банка, прочие расходы и предоплаты, а остаток идёт в жильё. Чем больше комиссии, тем меньше идёт в жильё, тем больше кредит и тем выше платёж каждый месяц. Если расходы не помещаются в первоначальный платёж, разницу добавляют в кредит, и результат тот же. Двигайте точку на графике.',
-      barK: function(v){ return 'Первоначальный платёж ' + v; },
+      tradeP: 'В жильё нужно положить минимум 3,5% цены, остальные ваши деньги идут на комиссии банка, прочие расходы и предоплаты. Чем больше комиссии, тем больше кредит и тем выше платёж каждый месяц. Если денег не хватает, цену в договоре можно поднять, а продавец вернёт разницу на расходы: кредит вырастет на ту же сумму. Двигайте точку на графике.',
+      barK: function(v){ return 'При покупке нужно ' + v; },
       lgBank: function(v){ return 'банку ' + v; },
       lgOther: function(v){ return 'прочие расходы ' + v; },
       lgPre: function(v){ return 'предоплаты ' + v; },
       lgHome: function(v){ return 'в жильё ' + v; },
+      lgMine: function(v){ return 'ваши деньги ' + v; },
+      lgSeller: function(v){ return 'от продавца ' + v; },
+      upfrontSub2: function(h, c, x){ return 'в жильё ' + h + ', на расходы ' + c + '; продавец покрывает ' + x; },
+      rolledLimit: ' У FHA продавец может покрыть не больше 6% цены, а здесь больше.',
+      rolledShort: function(d, s){ return 'Даже если продавец покроет все расходы, на взнос 3,5% (' + d + ') не хватает ' + s + '.'; },
       rolledZero: 'Расходов нет: весь первоначальный платёж идёт в жильё.',
       rolledNo: function(v){ return 'Комиссии и расходы забрали ' + v + ' из первоначального платежа, и на столько же вырос кредит.'; },
-      rolledYes: function(v){ return 'Комиссии и расходы забрали весь первоначальный платёж, и ещё ' + v + ' добавлено в кредит.'; },
+      rolledYes: function(p, x){ return 'Денег не хватает на взнос 3,5% и расходы. Цена в договоре ' + p + ', продавец возвращает ' + x + ' на расходы. Сработает, если продавец согласен и оценка не ниже этой цены.'; },
       monthlyK: 'Всё, что платите каждый месяц',
       delta: function(v){ return 'из них ' + v + ' из-за комиссий'; },
       deltaNo: 'комиссий нет',
@@ -437,7 +476,19 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       termsH: 'Loan terms',
       price: 'Home price',
       down: 'Upfront payment',
-      downHint: 'All the money you hand over at closing: toward the home and for lender fees.',
+      downHint: 'All the money you hand over at closing: toward the home and for costs. At least 3.5% of the price must go toward the home.',
+      budget: 'Monthly budget',
+      budgetHint: 'How much you can pay each month for everything together: loan, PMI, tax, HOA and insurance.',
+      vOk: function(f, c){ return 'Within budget. Lender fees can go up to ' + f + '; now ' + c + '.'; },
+      vOkMax: function(f){ return 'Within budget with room to spare: the payment stays within budget even with fees above ' + f + '.'; },
+      vFees: function(o, f, c){ return 'Over budget by ' + o + ' a month. You need a lender with fees up to ' + f + '; now ' + c + '.'; },
+      vPrice: function(o, p1, f, p0){ return 'Over budget by ' + o + ' a month, and no fees wouldn’t fix it. With fees of ' + f + ', a home up to ' + p1 + ' fits; with no fees, up to ' + p0 + '.'; },
+      vPrice0: function(o, p0){ return 'Over budget by ' + o + ' a month. A home up to ' + p0 + ' fits.'; },
+      vLow: 'The budget is below the fixed monthly costs: tax, HOA, insurance and PMI already exceed it.',
+      bLine: function(v){ return 'your budget ' + v; },
+      bMax: function(v){ return 'up to ' + v; },
+      bAbove: function(v){ return 'budget ' + v + ' is above the chart'; },
+      bBelow: function(v){ return 'budget ' + v + ' is below the chart'; },
       rate: 'Rate',
       rateHint: 'The rate in the lender’s offer. If it’s lowered by points, enter the lowered rate and add the points to the fees.',
       term: 'Term',
@@ -447,11 +498,13 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       pointsNone: 'none',
       pointsVal: function(p, c, r){ return p + ' (' + c + '), rate ' + r; },
       fees: 'Lender fees',
-      feesHint: 'Everything the lender charges to set up the loan, including points and prepaid interest. In the Loan Estimate, that’s section A plus the interest line in section F. Taken out of your upfront payment; if that isn’t enough, added to the loan.',
+      feesHint: 'Everything the lender charges to set up the loan, including points and prepaid interest. In the Loan Estimate, that’s section A plus the interest line in section F. Taken out of your upfront payment.',
       other: 'Other closing costs',
       otherHint: 'Everything paid at closing that doesn’t go to the lender: appraisal, title, attorney, government fees. In the Loan Estimate, that’s sections B, C, E and H. Also taken out of your upfront payment, but not part of APR.',
       pre: 'Prepaids and escrow',
       preHint: 'Insurance and tax paid ahead, plus the escrow reserve (sections F and G, except interest). It isn’t money lost, it’s your own payments made in advance, but it still comes out of your upfront payment. Not part of APR.',
+      otherEst: 'Estimate: 1.5% of the price. The exact amount will be in the Loan Estimate.',
+      preEst: 'Estimate: 0.8% of the price. The exact amount will be in the Loan Estimate.',
       tax: 'Property tax',
       taxHint: 'Property tax per month. The lender usually collects it together with the payment. Not part of APR.',
       ins: 'Insurance',
@@ -467,23 +520,28 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       upfront: 'Upfront payment',
       upfrontSub: function(b, o, p, h){ return 'to the lender ' + b + ', other costs ' + o + ', prepaids ' + p + ', toward the home ' + h; },
       aprSub: function(r){ return 'loan rate ' + r + '; the payment is based on it'; },
-      cost: 'Loan amount',
-      costSub: function(v){ return 'closing costs added ' + v; },
+      cost: 'Price with costs',
+      costSub: function(c, l){ return 'your ' + c + ' + loan ' + l; },
       nDown: function(a, v){ return 'Another ' + a + ' down lowers the payment by ' + v + ' a month.'; },
       nRate: function(v, p){ return 'A rate 1 percentage point higher adds ' + v + ' a month (' + p + '% more).'; },
       nPoints: function(c, s, y){ return 'Points costing ' + c + ' cut the payment by ' + s + ' a month and pay for themselves in ' + y + ' years, if you keep the loan that long.'; },
       nPmi: 'Less than 20% of the price goes toward the home, so lenders usually add PMI, insurance that protects them, to the monthly payment. It isn’t included here.',
       nPmiOk: 'At least 20% of the price goes toward the home, so PMI usually isn’t required.',
       tradeH: 'Fees and the monthly payment',
-      tradeP: 'Lender fees, other closing costs and prepaids come out of your upfront payment first, and what’s left goes toward the home. The higher the fees, the less goes toward the home, the bigger the loan, and the higher the monthly payment. If the costs don’t fit in your upfront payment, the difference is added to the loan, with the same result. Drag the dot on the chart.',
-      barK: function(v){ return 'Upfront payment ' + v; },
+      tradeP: 'At least 3.5% of the price has to go toward the home; the rest of your money goes to lender fees, other costs and prepaids. The higher the fees, the bigger the loan and the higher the monthly payment. If your money isn’t enough, the contract price can be raised and the seller credits the difference back for costs: the loan grows by the same amount. Drag the dot on the chart.',
+      barK: function(v){ return 'Needed at closing: ' + v; },
       lgBank: function(v){ return 'to the lender ' + v; },
       lgOther: function(v){ return 'other costs ' + v; },
       lgPre: function(v){ return 'prepaids ' + v; },
       lgHome: function(v){ return 'toward the home ' + v; },
+      lgMine: function(v){ return 'your money ' + v; },
+      lgSeller: function(v){ return 'from the seller ' + v; },
+      upfrontSub2: function(h, c, x){ return 'toward the home ' + h + ', toward costs ' + c + '; the seller covers ' + x; },
+      rolledLimit: ' With FHA the seller can cover at most 6% of the price, and this is more.',
+      rolledShort: function(d, s){ return 'Even if the seller covers all the costs, you’re ' + s + ' short of the 3.5% down payment (' + d + ').'; },
       rolledZero: 'No closing costs: your whole upfront payment goes toward the home.',
       rolledNo: function(v){ return 'Fees and costs took ' + v + ' out of your upfront payment, so the loan grew by the same amount.'; },
-      rolledYes: function(v){ return 'Fees and costs took your whole upfront payment, and another ' + v + ' was added to the loan.'; },
+      rolledYes: function(p, x){ return 'Not enough for the 3.5% down payment plus costs. Contract price ' + p + ', and the seller credits back ' + x + ' for costs. This works if the seller agrees and the appraisal comes in at least at that price.'; },
       monthlyK: 'Everything you pay each month',
       delta: function(v){ return v + ' of it is because of fees'; },
       deltaNo: 'no fees',
@@ -542,22 +600,24 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
   function model(){
     var note = Math.max(0.25, S.rate - S.points * POINT_CUT);
     var n = S.term * 12;
-    var loan = (S.price - S.cash + S.fees + S.other + S.pre) / (1 - S.points / 100);
-    var pointsCost = loan * S.points / 100;
-    var upfrontFees = pointsCost + S.fees;
-    var toBank = Math.min(S.cash, upfrontFees);
-    var toOther = Math.min(S.cash - toBank, S.other);
-    var toPre = Math.min(S.cash - toBank - toOther, S.pre);
-    var down = S.cash - toBank - toOther - toPre;
-    var rolled = Math.max(0, upfrontFees + S.other + S.pre - S.cash);
+    var pointsCost = 0, upfrontFees = S.fees;
+    var C = S.fees + S.other + S.pre, X = 0, short = 0, P2 = S.price, down;
+    if (S.cash >= MIN_DOWN * S.price + C){ down = S.cash - C; }
+    else {
+      X = Math.min(C, (C + MIN_DOWN * S.price - S.cash) / (1 - MIN_DOWN));
+      P2 = S.price + X;
+      down = S.cash - (C - X);
+      short = Math.max(0, MIN_DOWN * P2 - down);
+    }
+    var loan = P2 - down;
     var M = pmt(loan, note, n);
     var K = 0;
     if (S.pmi > 0){
-      var jr = note / 1200, lim = 0.78 * S.price, bal = loan;
+      var jr = note / 1200, lim = 0.78 * P2, bal = loan;
       while (bal > lim && K < n){ bal = bal * (1 + jr) - M; K++; }
     }
     var apr = (upfrontFees > 0.5 || K > 0) ? solveAPR(M, n, loan - upfrontFees, S.pmi, K) : note;
-    return { pmiK:K, pmiNow:(K > 0 ? S.pmi : 0), down:down, toBank:toBank, toOther:toOther, toPre:toPre, rolled:rolled, downPct:down / S.price * 100, loan:loan, note:note, n:n, M:M, pointsCost:pointsCost, upfrontFees:upfrontFees, apr:apr, interest:M * n - loan };
+    return { pmiK:K, pmiNow:(K > 0 ? S.pmi : 0), down:down, X:X, P2:P2, short:short, C:C, downPct:down / P2 * 100, loan:loan, note:note, n:n, M:M, pointsCost:pointsCost, upfrontFees:upfrontFees, apr:apr, interest:M * n - loan };
   }
 
   var last = null;
@@ -568,6 +628,7 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
 
     $('priceV').textContent = money(S.price);
     $('downV').textContent = money(S.cash);
+    $('budgetV').textContent = money(S.budget);
     $('fees2V').textContent = money(S.fees);
     $('fees').value = S.fees; $('fees2').value = S.fees;
     $('rateV').textContent = pct(S.rate);
@@ -576,6 +637,8 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
     $('insV').textContent = t.perMo(money(S.ins));
     $('otherV').textContent = money(S.other);
     $('preV').textContent = money(S.pre);
+    $('other').value = S.other; $('pre').value = S.pre;
+    $('otherEst').hidden = !S.otherAuto; $('preEst').hidden = !S.preAuto;
     $('taxV').textContent = t.perMo(money(S.tax));
     $('pmiV').textContent = !S.pmi ? t.perMo(money(0)) : (m.pmiK ? t.pmiVal(money(S.pmi), num(m.pmiK / 12, 1)) : t.pmiNone);
     $('t15').textContent = t.yrs(15); $('t30').textContent = t.yrs(30);
@@ -584,11 +647,28 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
     $('vMonthly').textContent = money(m.M + S.hoa + S.ins + S.tax + m.pmiNow);
     $('sMonthly').textContent = t.monthlySub2(money(m.M), m.pmiNow ? money(m.pmiNow) : '', money(S.tax), money(S.hoa), money(S.ins));
     $('vUpfront').textContent = money(S.cash);
-    $('sUpfront').textContent = t.upfrontSub(money(m.toBank), money(m.toOther), money(m.toPre), money(m.down));
+    $('sUpfront').textContent = m.X > 0.5 ? t.upfrontSub2(money(m.down), money(m.C - m.X), money(m.X)) : t.upfrontSub(money(S.fees), money(S.other), money(S.pre), money(m.down));
     $('vApr').textContent = pct(m.apr);
     $('sApr').textContent = t.aprSub(pct(m.note));
-    $('vCost').textContent = money(m.loan);
-    $('sCost').textContent = t.costSub(money(m.upfrontFees + S.other + S.pre));
+    $('vCost').textContent = money(S.cash + m.loan);
+    $('sCost').textContent = t.costSub(money(S.cash), money(m.loan));
+
+    var extras = S.hoa + S.ins + S.tax + m.pmiNow, over = m.M + extras - S.budget, vt, vOk = false;
+    if (S.budget <= extras){ vt = t.vLow; }
+    else {
+      var Lb = pv(S.budget - extras, m.note, m.n);
+      m.fMax = Lb - S.price + S.cash - S.other - S.pre;
+      var f10 = Math.floor(m.fMax / 10) * 10;
+      if (over <= 0.5){ vOk = true; vt = m.fMax > FMAX ? t.vOkMax(money(FMAX)) : t.vOk(money(f10), money(S.fees)); }
+      else if (m.fMax >= 0){ vt = t.vFees(money(over), money(f10), money(S.fees)); }
+      else {
+        var aP = (S.otherAuto ? OTHER_PCT : 0) + (S.preAuto ? PRE_PCT : 0), fx = (S.otherAuto ? 0 : S.other) + (S.preAuto ? 0 : S.pre);
+        var p0 = (Lb + S.cash - fx) / (1 + aP), p1 = (Lb + S.cash - fx - S.fees) / (1 + aP);
+        vt = S.fees > 0 ? t.vPrice(money(over), money(Math.floor(p1 / 1000) * 1000), money(S.fees), money(Math.floor(p0 / 1000) * 1000)) : t.vPrice0(money(over), money(Math.floor(p0 / 1000) * 1000));
+      }
+    }
+    $('verdict').textContent = vt;
+    $('verdict').className = 'verdict' + (vOk ? ' ok' : '');
 
     var notes = [];
     if (S.points > 0){
@@ -665,17 +745,26 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
   var FMAX = 15000, pmiOn = 0;
   function drawTrade(m){
     var t = L();
-    $('barK').textContent = t.barK(money(S.cash));
-    $('spBank').style.width = (m.toBank / S.cash * 100) + '%';
-    $('spOther').style.width = (m.toOther / S.cash * 100) + '%';
-    $('spPre').style.width = (m.toPre / S.cash * 100) + '%';
-    $('spHome').style.width = (m.down / S.cash * 100) + '%';
-    $('lgBank').textContent = t.lgBank(money(m.toBank));
-    $('lgOther').textContent = t.lgOther(money(m.toOther));
-    $('lgPre').textContent = t.lgPre(money(m.toPre));
+    var T = m.down + m.C;
+    $('barK').textContent = t.barK(money(T));
+    $('spHome').style.width = (m.down / T * 100) + '%';
+    $('spBank').style.width = (S.fees / T * 100) + '%';
+    $('spOther').style.width = (S.other / T * 100) + '%';
+    $('spPre').style.width = (S.pre / T * 100) + '%';
+    $('spMine').style.width = (S.cash / T * 100) + '%';
+    $('spSeller').style.width = (m.X / T * 100) + '%';
     $('lgHome').textContent = t.lgHome(money(m.down));
-    var costs = m.upfrontFees + S.other + S.pre;
-    $('rolled').textContent = costs < 0.5 ? t.rolledZero : (m.rolled > 0.5 ? t.rolledYes(money(m.rolled)) : t.rolledNo(money(costs)));
+    $('lgBank').textContent = t.lgBank(money(S.fees));
+    $('lgOther').textContent = t.lgOther(money(S.other));
+    $('lgPre').textContent = t.lgPre(money(S.pre));
+    $('lgMine').textContent = t.lgMine(money(S.cash));
+    $('lgSeller').textContent = t.lgSeller(money(m.X));
+    var msg;
+    if (m.C < 0.5) msg = t.rolledZero;
+    else if (m.X < 0.5) msg = t.rolledNo(money(m.C));
+    else if (m.short > 0.5) msg = t.rolledShort(money(MIN_DOWN * m.P2), money(m.short));
+    else msg = t.rolledYes(money(m.P2), money(m.X)) + (m.X > 0.06 * m.P2 ? t.rolledLimit : '');
+    $('rolled').textContent = msg;
     pmiOn = m.pmiNow;
     $('totV').textContent = money(m.M + S.hoa + S.ins + S.tax + m.pmiNow);
     $('delta').textContent = m.upfrontFees < 0.5 ? t.deltaNo : t.delta(money(pmt(m.upfrontFees, m.note, m.n)));
@@ -685,6 +774,8 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
     var kf = new Intl.NumberFormat(loc(), { style:'currency', currency:'USD', notation:'compact', maximumFractionDigits:0 });
     var rates = [Math.max(0.25, m.note - 1), m.note, m.note + 1];
     var lo = payFor(0, rates[0], m.n), hi = payFor(FMAX, rates[2], m.n);
+    var B = S.budget, span = hi - lo, showB = B >= lo - span && B <= hi + span, hi0 = hi;
+    if (showB){ lo = Math.min(lo, B); hi = Math.max(hi, B); }
     var stepY = niceStep((hi - lo) / 4), botY = Math.floor(lo / stepY) * stepY, topY = Math.ceil(hi / stepY) * stepY;
     function X(f){ return CPL + f / FMAX * (W - CPL - CPR); }
     function Y(v){ return pt + (1 - (v - botY) / (topY - botY)) * (H - pt - pb); }
@@ -699,6 +790,19 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
       g += '<line x1="' + X(0).toFixed(1) + '" y1="' + y0.toFixed(1) + '" x2="' + X(FMAX).toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="' + (cur ? 'var(--later)' : 'var(--muted)') + '" stroke-width="' + (cur ? 3 : 1.5) + '" stroke-linecap="round"/>';
       g += '<text x="' + (X(0) + 4).toFixed(1) + '" y="' + (y0 - 6).toFixed(1) + '"' + (cur ? ' class="lbl-cur"' : '') + '>' + pct(r) + '</text>';
     });
+    if (showB){
+      var yb = Y(B).toFixed(1);
+      g += '<rect x="' + CPL + '" y="' + pt + '" width="' + (W - CPL - CPR) + '" height="' + Math.max(0, Y(B) - pt).toFixed(1) + '" fill="var(--bad)" opacity="0.07"/>';
+      g += '<line x1="' + CPL + '" x2="' + (W - CPR) + '" y1="' + yb + '" y2="' + yb + '" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="6 4"/>';
+      g += '<text x="' + (W - CPR - 2) + '" y="' + (Y(B) - 5).toFixed(1) + '" text-anchor="end" style="fill:var(--bad);font-weight:600">' + t.bLine(money(B)) + '</text>';
+      if (m.fMax !== undefined && m.fMax >= 0 && m.fMax <= FMAX){
+        var xc = X(m.fMax), an2 = m.fMax > FMAX * 0.8 ? 'end' : (m.fMax < FMAX * 0.2 ? 'start' : 'middle');
+        g += '<circle cx="' + xc.toFixed(1) + '" cy="' + yb + '" r="4.5" fill="var(--surface)" stroke="var(--bad)" stroke-width="2"/>';
+        g += '<text x="' + xc.toFixed(1) + '" y="' + (Y(B) + 16).toFixed(1) + '" text-anchor="' + an2 + '" style="fill:var(--bad);font-weight:600">' + t.bMax(money(Math.floor(m.fMax / 10) * 10)) + '</text>';
+      }
+    } else {
+      g += '<text x="' + (W - CPR - 2) + '" y="' + (B > hi0 ? pt + 10 : H - pb - 4) + '" text-anchor="end" style="fill:var(--bad);font-weight:600">' + (B > hi0 ? t.bAbove(money(B)) : t.bBelow(money(B))) + '</text>';
+    }
     var xd = X(S.fees), yd = Y(m.M + S.hoa + S.ins + S.tax + m.pmiNow);
     g += '<line x1="' + xd.toFixed(1) + '" x2="' + xd.toFixed(1) + '" y1="' + yd.toFixed(1) + '" y2="' + (H - pb) + '" stroke="var(--now)" stroke-width="1.5" stroke-dasharray="4 3"/>';
     g += '<line x1="' + CPL + '" x2="' + xd.toFixed(1) + '" y1="' + yd.toFixed(1) + '" y2="' + yd.toFixed(1) + '" stroke="var(--later)" stroke-width="1.5" stroke-dasharray="4 3"/>';
@@ -782,15 +886,17 @@ input[type=range]:focus-visible{ outline:2px solid var(--later); outline-offset:
   function bind(id, key, parse){
     $(id).addEventListener('input', function(e){ stopAnim(); keep(e.target, function(){ S[key] = parse(e.target.value); render(); }); });
   }
-  bind('price', 'price', Number);
+  function applyEst(){ S.other = Math.round(S.price * OTHER_PCT / 50) * 50; S.pre = Math.round(S.price * PRE_PCT / 50) * 50; S.otherAuto = true; S.preAuto = true; }
+  $('price').addEventListener('input', function(e){ stopAnim(); keep(e.target, function(){ S.price = Number(e.target.value); applyEst(); render(); }); });
   bind('cash', 'cash', Number);
+  bind('budget', 'budget', Number);
   bind('fees2', 'fees', Number);
   bind('hoa', 'hoa', Number);
   bind('ins', 'ins', Number);
   bind('pmi', 'pmi', Number);
   bind('tax', 'tax', Number);
-  bind('other', 'other', Number);
-  bind('pre', 'pre', Number);
+  $('other').addEventListener('input', function(e){ stopAnim(); keep(e.target, function(){ S.other = Number(e.target.value); S.otherAuto = false; render(); }); });
+  $('pre').addEventListener('input', function(e){ stopAnim(); keep(e.target, function(){ S.pre = Number(e.target.value); S.preAuto = false; render(); }); });
   bind('rate', 'rate', Number);
   bind('fees', 'fees', Number);
   $('t15').addEventListener('click', function(e){ var b = e.currentTarget; keep(b, function(){ S.term = 15; render(); }); });
